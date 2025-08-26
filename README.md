@@ -6,6 +6,7 @@
 `docker compose --env-file .env up --build`
 
 then `npm run prisma:seed`
+
 2. for all the next runs
 
 `docker compose --env-file .env up`
