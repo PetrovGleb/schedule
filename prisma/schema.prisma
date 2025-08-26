@@ -1,0 +1,91 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model Users {
+  id        Int    @id @default(autoincrement())
+  full_name String
+  role      Role
+
+  schedules Schedule[]
+  teachers  Teachers[]
+}
+
+model Teachers {
+  id      Int @id @default(autoincrement())
+  user_id Int
+
+  user     Users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  subjects Subjects[]
+
+  @@index([user_id])
+}
+
+model Subjects {
+  id           Int      @id @default(autoincrement())
+  subject_name String   @unique
+  teacher_id   Int
+  teacher      Teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  sections Sections[]
+}
+
+model Classroom {
+  id        Int        @id @default(autoincrement())
+  classroom String     @unique
+  sections  Sections[]
+
+  @@index([classroom])
+}
+
+model Sections {
+  id               Int         @id @default(autoincrement())
+  classroom_id     Int
+  subject_id       Int
+  days             DayOfWeek[]
+  start_time       Int
+  duration_minutes Int
+  end_time         Int
+
+  classroom Classroom @relation(fields: [classroom_id], references: [id], onDelete: Restrict)
+  subject   Subjects  @relation(fields: [subject_id], references: [id], onDelete: Restrict)
+
+  schedules Schedule[]
+
+  @@index([subject_id])
+  @@index([classroom_id])
+  @@index([start_time, end_time])
+}
+
+model Schedule {
+  id         Int @id @default(autoincrement())
+  user_id    Int
+  section_id Int
+
+  user    Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  section Sections @relation(fields: [section_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, section_id])
+  @@index([user_id])
+  @@index([section_id])
+}
