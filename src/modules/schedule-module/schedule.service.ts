@@ -1,9 +1,14 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { DayOfWeek, Role } from "@prisma/client";
+import { DayOfWeek, Role } from '@prisma/client';
 import PDFDocument from 'pdfkit';
-import { DaysOfWeekMap } from "../../contracts/schedule/schedule.constants";
-import { toTime } from "../../utils/minutes-to-time";
+import { DaysOfWeekMap } from '../../contracts/schedule/schedule.constants';
+import { toTime } from '../../utils/minutes-to-time';
 
 @Injectable()
 export class ScheduleService {
@@ -20,7 +25,7 @@ export class ScheduleService {
     }
 
     const section = await this.prisma.sections.findUnique({
-      where: { id: sectionId }
+      where: { id: sectionId },
     });
     if (!section) {
       throw new NotFoundException(`Section #${sectionId} not found`);
@@ -31,7 +36,9 @@ export class ScheduleService {
     });
 
     if (alreadyInSchedule) {
-      throw new ConflictException(`User ${user.full_name} is already enrolled in section #${sectionId}`);
+      throw new ConflictException(
+        `User ${user.full_name} is already enrolled in section #${sectionId}`,
+      );
     }
 
     const conflicts = await this.prisma.sections.findMany({
@@ -54,7 +61,7 @@ export class ScheduleService {
     if (conflicts.length > 0) {
       const c = conflicts[0];
       throw new ConflictException(
-        `Time conflict with section #${c.id} (${c.subject.subject_name})`
+        `Time conflict with section #${c.id} (${c.subject.subject_name})`,
       );
     }
 
@@ -108,7 +115,9 @@ export class ScheduleService {
 
     try {
       await this.prisma.schedule.delete({
-        where: { user_id_section_id: { user_id: userId, section_id: sectionId } },
+        where: {
+          user_id_section_id: { user_id: userId, section_id: sectionId },
+        },
       });
       return true;
     } catch (error) {
@@ -175,22 +184,25 @@ export class ScheduleService {
     const scheduleByDay = new Map<DayOfWeek, ScheduleLinesType[]>();
     const dayOrder = Object.keys(DaysOfWeekMap);
     for (const day of dayOrder) scheduleByDay.set(day as DayOfWeek, []);
-    for (const scheduleLine of scheduleLines) scheduleByDay.get(scheduleLine.day)!.push(scheduleLine);
+    for (const scheduleLine of scheduleLines)
+      scheduleByDay.get(scheduleLine.day)?.push(scheduleLine);
     for (const day of dayOrder) {
-      scheduleByDay.get(day as DayOfWeek)!.sort((a, b) => a.start - b.start);
+      scheduleByDay.get(day as DayOfWeek)?.sort((a, b) => a.start - b.start);
     }
 
     const doc = new PDFDocument({ size: 'A4', margin: 36 });
     const chunks: Buffer[] = [];
     doc.on('data', (chunk) => chunks.push(chunk));
-    const done = new Promise<Buffer>((resolve) => doc.on('end', () => resolve(Buffer.concat(chunks))));
+    const done = new Promise<Buffer>((resolve) =>
+      doc.on('end', () => resolve(Buffer.concat(chunks))),
+    );
 
     doc.fontSize(18).text(user.full_name, { underline: true });
     doc.moveDown();
 
     for (const day of dayOrder) {
-      const list = scheduleByDay.get(day as DayOfWeek)!;
-      if (list.length === 0) continue;
+      const list = scheduleByDay.get(day as DayOfWeek);
+      if (!list || (list && list.length === 0)) continue;
 
       doc.fontSize(14).text(DaysOfWeekMap[day], { underline: true });
       doc.moveDown(0.25);

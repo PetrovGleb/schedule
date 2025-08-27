@@ -8,13 +8,7 @@ dotenv.config({
 });
 const ajv = new Ajv();
 
-const {
-  DB_NAME,
-  DB_HOST,
-  DB_PORT,
-  DB_USERNAME,
-  DB_PASSWORD,
-} = process.env;
+const { DATABASE_URL } = process.env;
 
 const validate = ajv.compile<EnvSchema>(envSchema);
 
@@ -24,5 +18,4 @@ if (validate(process.env)) {
   console.log(ajv.errorsText(validate.errors));
 }
 
-export const dbUrl = `postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
-export {};
+export { DATABASE_URL };

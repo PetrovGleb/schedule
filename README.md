@@ -3,9 +3,9 @@
 1. check `.env.example`, rename it to `.env`, adjust variables if needed
 2. for the first run:
 
-`docker compose --env-file .env up --build`
+- `docker compose --env-file .env up --build`
 
-then `npm run prisma:seed`
+- then `DATABASE_SEED_URL=postgresql://{DB_USERNAME}:{DB_PASSWORD}@localhost:5432/{DB_NAME} npm run prisma:seed npm run prisma:seed`
 
 2. for all the next runs
 
